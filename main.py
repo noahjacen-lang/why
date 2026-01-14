@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-token = os.getenv('DISCORD_TOKEN')
 
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode="w")
 
@@ -36,4 +35,4 @@ async def stfu(ctx: commands.Context, member: discord.Member):
         await ctx.send(f"Couldn't contain its oil: {e}")
 
 #Don't forget to run your bot with your token
-bot.run(token, log_handler=handler, log_level=logging.INFO)
+bot.run('MTQ2MDgyNTYzMTQ5ODY5ODkxNA.GtO98h.57v_lk0oOV4qxE1WMO0_RSBhUzpSPQWK3cP5xU', log_handler=handler, log_level=logging.INFO)
