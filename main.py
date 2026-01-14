@@ -36,10 +36,12 @@ async def on_ready():
 def stfu_cooldown(ctx: commands.Context):
     if ctx.guild and ctx.author.id == ctx.guild.owner_id:
         return None  # No cooldown
+
     return commands.Cooldown(1, 86400)
 
 @bot.command()
 @commands.has_permissions(moderate_members=True)
+@commands.bot_has_permissions(moderate_members=True)
 @commands.dynamic_cooldown(stfu_cooldown, commands.BucketType.user)
 async def stfu(ctx: commands.Context, member: discord.Member):
     duration = datetime.timedelta(minutes=1)
@@ -54,8 +56,10 @@ async def stfu(ctx: commands.Context, member: discord.Member):
 @stfu.error
 async def stfu_error(ctx: commands.Context, error):
     if isinstance(error, commands.CommandOnCooldown):
-        hours = round(error.retry_after / 3600, 2)
-        await ctx.send(f"Bitch chillout. You can mute again in {hours} hours.")
+        hours = error.retry_after / 3600
+        await ctx.send(
+            f"Bitch chillout. You can mute again in {hours:.2f} hours."
+        )
     elif isinstance(error, commands.MissingPermissions):
         await ctx.send("You don't have permission to use this command.")
 
@@ -75,5 +79,9 @@ def home():
 # START EVERYTHING
 # --------------------
 if __name__ == "__main__":
-    threading.Thread(target=run_discord_bot, daemon=True).start()
+    threading.Thread(
+        target=run_discord_bot,
+        daemon=True
+    ).start()
+
     app.run(host="0.0.0.0", port=10000, use_reloader=False)
