@@ -37,7 +37,7 @@ def stfu_cooldown(ctx: commands.Context):
     if ctx.guild and ctx.author.id == ctx.guild.owner_id:
         return None  # No cooldown
 
-    return commands.Cooldown(1, 86400)
+    return commands.Cooldown(1, 43200)
 
 @bot.command()
 @commands.has_permissions(moderate_members=True)
@@ -85,3 +85,4 @@ if __name__ == "__main__":
     ).start()
 
     app.run(host="0.0.0.0", port=10000, use_reloader=False)
+    
