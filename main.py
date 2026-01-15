@@ -57,7 +57,7 @@ async def stfu(ctx: commands.Context, member: discord.Member):
 @bot.command()
 @commands.has_permissions(moderate_members=True)
 @commands.bot_has_permissions(moderate_members=True)
-async def MuteABitch(ctx: commands.Context, member: discord.Member, duration_minutes: int = 1, required_percent: int = 50)
+async def MuteABitch(ctx: commands.Context, member: discord.Member, duration_minutes: int = 1, required_percent: int = 50):
     embed = discord.Embed(
         title="Mute a Bitch Poll",
         description= f"Do you want to timeout {member.mention} for {duration_minutes} minute(s)?",
