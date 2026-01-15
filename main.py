@@ -75,14 +75,11 @@ app = Flask(__name__)
 def home():
     return "Discord bot is running."
 
+def start_discord():
+    threading.Thread(target=run_discord_bot, daemon=True).start()
 # --------------------
 # START EVERYTHING
 # --------------------
 if __name__ == "__main__":
-    threading.Thread(
-        target=run_discord_bot,
-        daemon=True
-    ).start()
-
+    start_discord()
     app.run(host="0.0.0.0", port=10000, use_reloader=False)
-    
