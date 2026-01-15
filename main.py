@@ -142,28 +142,24 @@ async def JudgeABitch(ctx, defendant: discord.Member):
     await asyncio.sleep(60)
 
     # Create vote message
-    vote_msg = await ctx.send(
-        f"🗳️ **Vote: Should {defendant.mention} be muted for 1 minute?**\n"
-        "✅ = Yes\n❌ = No"
-    )
-    await vote_msg.add_reaction("✅")
-    await vote_msg.add_reaction("❌")
-
 
     # Start poll
-    vote_msg = await ctx.send(
-        f"🗳️ **Vote: Should {defendant.mention} be muted for 1 minute?**\n"
-        "✅ = Yes\n❌ = No"
+    embed = discord.Embed(
+        title="Mute a Bitch Poll",
+        description=f"Do you want to timeout {member.mention} for 5 minute(s)?",
+        color=discord.Color.orange()
     )
-    await vote_msg.add_reaction("✅")
-    await vote_msg.add_reaction("❌")
+    embed.set_footer(text=f"Poll started by {ctx.author}")
 
-    # Wait 30 seconds for votes
+    poll_message = await ctx.send(embed=embed)
+
+    await poll_message.add_reaction("✅")
+    await poll_message.add_reaction("❌")
+
     await asyncio.sleep(15)
 
-    # Fetch updated reactions
-    vote_msg = await ctx.channel.fetch_message(vote_msg.id)
-    reactions = {str(r.emoji): r.count - 1 for r in vote_msg.reactions}  # subtract bot's reaction
+    poll_message = await ctx.channel.fetch_message(poll_message.id)
+    reactions = {str(r.emoji): r.count for r in poll_message.reactions}
     yes_votes = reactions.get("✅", 0)
     no_votes = reactions.get("❌", 0)
     total_votes = yes_votes + no_votes
