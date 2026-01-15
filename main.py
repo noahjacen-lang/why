@@ -100,71 +100,74 @@ async def MuteABitch(ctx: commands.Context, member: discord.Member, duration_min
 async def JudgeABitch(ctx, defendant: discord.Member):
     """
     Starts a trial where everyone in the defendant's voice channel is moved to Court-Room,
-    and the defendant has 60 seconds to plead.
+    the defendant has 60 seconds to plead, then a poll decides their fate.
+    Everyone is returned to their original channels afterward.
     """
-    # Check if defendant is in a voice channel
     if defendant.voice is None:
         await ctx.send(f"{defendant.mention} is not in a voice channel!")
         return
 
     original_channel = defendant.voice.channel
-
-    # Check if Court-Room exists, otherwise create it
-    court_channel = discord.utils.get(ctx.guild.voice_channels, name="Court-Room")
-    if court_channel is None:
-        overwrites = {
-            ctx.guild.default_role: discord.PermissionOverwrite(connect=True)
-        }
-        court_channel = await ctx.guild.create_voice_channel("Court-Room", overwrites=overwrites)
-
-    # Get all members in the defendant's channel
     members_to_move = original_channel.members
     if not members_to_move:
         await ctx.send("No one is in the defendant's channel to move!")
         return
 
+    member_orig_channels = {member: member.voice.channel for member in members_to_move}
+
+    # Get or create Court-Room
+    court_channel = discord.utils.get(ctx.guild.voice_channels, name="Court-Room")
+    if court_channel is None:
+        overwrites = {ctx.guild.default_role: discord.PermissionOverwrite(connect=True)}
+        court_channel = await ctx.guild.create_voice_channel("Court-Room", overwrites=overwrites)
+
     # Move everyone to Court-Room
     for member in members_to_move:
         try:
             await member.move_to(court_channel)
-        except discord.Forbidden:
-            await ctx.send(f"Can't move {member.mention} due to permissions.")
-        except discord.HTTPException:
-            await ctx.send(f"Failed to move {member.mention}.")
+        except:
+            pass
 
-    # Announce the trial
-    trial_msg = await ctx.send(
+    await ctx.send(
         f"⚖️ **Trial of {defendant.mention} has begun!**\n"
         f"{defendant.mention}, you have 60 seconds to plead your case!"
     )
-
-    # Wait 60 seconds for defendant to plead
     await asyncio.sleep(60)
 
-    # Create vote message
-
-    # Start poll
-    embed = discord.Embed(
-        title="Mute a Bitch Poll",
-        description=f"Do you want to timeout {member.mention} for 5 minute(s)?",
+    # Create poll embed
+    poll_embed = discord.Embed(
+        title=f"Trial Poll for {defendant.display_name}",
+        description=f"Should {defendant.mention} be muted for 5 minutes?\nReact below:",
         color=discord.Color.orange()
     )
-    embed.set_footer(text=f"Poll started by {ctx.author}")
+    poll_embed.add_field(name="✅ Yes", value="0 votes", inline=False)
+    poll_embed.add_field(name="❌ No", value="0 votes", inline=False)
 
-    poll_message = await ctx.send(embed=embed)
+    poll_msg = await ctx.send(embed=poll_embed)
+    await poll_msg.add_reaction("✅")
+    await poll_msg.add_reaction("❌")
 
-    await poll_message.add_reaction("✅")
-    await poll_message.add_reaction("❌")
+    # Update poll every 5 seconds for 30 seconds
+    poll_duration = 30
+    update_interval = 5
+    for _ in range(0, poll_duration, update_interval):
+        await asyncio.sleep(update_interval)
+        poll_msg = await ctx.channel.fetch_message(poll_msg.id)
+        reactions = {str(r.emoji): r.count - 1 for r in poll_msg.reactions}  # subtract bot's reaction
+        yes_votes = reactions.get("✅", 0)
+        no_votes = reactions.get("❌", 0)
 
-    await asyncio.sleep(15)
+        poll_embed.set_field_at(0, name="✅ Yes", value=f"{yes_votes} votes", inline=False)
+        poll_embed.set_field_at(1, name="❌ No", value=f"{no_votes} votes", inline=False)
+        await poll_msg.edit(embed=poll_embed)
 
-    poll_message = await ctx.channel.fetch_message(poll_message.id)
-    reactions = {str(r.emoji): r.count for r in poll_message.reactions}
+    # Final vote count
+    poll_msg = await ctx.channel.fetch_message(poll_msg.id)
+    reactions = {str(r.emoji): r.count - 1 for r in poll_msg.reactions}
     yes_votes = reactions.get("✅", 0)
     no_votes = reactions.get("❌", 0)
     total_votes = yes_votes + no_votes
 
-    # Decide outcome
     if total_votes == 0:
         await ctx.send("No votes were cast. Trial ends with no action.")
     else:
@@ -172,21 +175,19 @@ async def JudgeABitch(ctx, defendant: discord.Member):
         if yes_percent >= 50:
             try:
                 await defendant.timeout(duration=datetime.timedelta(minutes=5))
-                await ctx.send(f"{defendant.mention} has been muted for 1 minute by the court!")
-            except discord.Forbidden:
-                await ctx.send("I don't have permission to timeout the defendant.")
-            except discord.HTTPException as e:
-                await ctx.send(f"Failed to timeout defendant: {e}")
+                await ctx.send(f"{defendant.mention} has been muted for 5 minutes by the court!")
+            except:
+                await ctx.send("Could not timeout the defendant due to permissions.")
         else:
             await ctx.send(f"{defendant.mention} was acquitted by the court! ✅")
 
-    # Move everyone back to original channel
-    for member in members_to_move:
+    # Move everyone back to their original channels
+    for member, channel in member_orig_channels.items():
         try:
-            await member.move_to(original_channel)
+            if member.voice and member.voice.channel != channel:
+                await member.move_to(channel)
         except:
             pass
-
 @stfu.error
 async def stfu_error(ctx: commands.Context, error):
     if isinstance(error, commands.CommandOnCooldown):
