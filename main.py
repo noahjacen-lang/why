@@ -176,8 +176,10 @@ async def JudgeABitch(ctx, defendant: discord.Member):
             try:
                 await defendant.timeout(duration=datetime.timedelta(minutes=5))
                 await ctx.send(f"{defendant.mention} has been muted for 5 minutes by the court!")
-            except:
-                await ctx.send("Could not timeout the defendant due to permissions.")
+            except discord.Forbidden:
+                await ctx.send("I don't have permission to timeout this member.")
+            except discord.HTTPException as e:
+                await ctx.send(f"Failed to timeout member: {e}")
         else:
             await ctx.send(f"{defendant.mention} was acquitted by the court! ✅")
 
