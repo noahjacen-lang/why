@@ -1,5 +1,6 @@
 import discord
 import datetime
+import asyncio
 from discord.ext import commands
 import logging
 from dotenv import load_dotenv
@@ -52,6 +53,47 @@ async def stfu(ctx: commands.Context, member: discord.Member):
         await ctx.send("I'm a bitch and can't mute this member.")
     except discord.HTTPException as e:
         await ctx.send(f"Couldn't contain its oil: {e}")
+
+@bot.command()
+@commands.has_permissions(moderate_members=True)
+@commands.bot_has_permissions(moderate_members=True)
+async def MuteABitch(ctx: commands.Context, member: discord.Member, duration_minutes: int = 1, required_percent: int = 50)
+    embed = discord.Embed(
+        title="Mute a Bitch Poll",
+        description= f"Do you want to timeout {member.mention} for {duration_minutes} minute(s)?",
+        color=discord.Color.orange()
+    )
+    embed.set_footer(text=f"Poll started by {ctx.author}")
+
+    poll_message = await ctx.send(embed=embed)
+
+    await poll_message.add_reaction("✅")
+    await poll_message.add_reaction("❌")
+
+    await asyncio.sleep(120)
+
+    poll_message = await ctx.channel.fetch_message(poll_message.id)
+    reactions = {str(r.emoji): r.count for r in poll_message.reactions}
+    yes_votes = reactions.get("✅",0)
+    no_votes = reactions.get("❌",0)
+    total_votes = yes_votes + no_votes
+
+    if total_votes == 0:
+        await ctx.send("You all are a bunch of bitches.")
+        return
+
+    yes_percent = (yes_votes / total_votes) * 100
+    if yes_percent >= required_percent:
+        try:
+            duration = datetime.timedelta(minutes=duration_minutes)
+            await member.timeout(duration)
+            await ctx.send(f"{member.mention} is a bitch so they got muted.")
+        except discord.Forbidden:
+            await ctx.send("I'm a bitch and can't mute this member.")
+        except discord.HTTPException as e:
+            await ctx.send(f"Couldn't contain its oil: {e}")
+    else:
+        await ctx.send("The Bitch Lives!")
 
 @stfu.error
 async def stfu_error(ctx: commands.Context, error):
