@@ -70,7 +70,7 @@ async def MuteABitch(ctx: commands.Context, member: discord.Member, duration_min
     await poll_message.add_reaction("✅")
     await poll_message.add_reaction("❌")
 
-    await asyncio.sleep(120)
+    await asyncio.sleep(45)
 
     poll_message = await ctx.channel.fetch_message(poll_message.id)
     reactions = {str(r.emoji): r.count for r in poll_message.reactions}
