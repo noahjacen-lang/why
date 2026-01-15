@@ -8,7 +8,8 @@ import threading
 from flask import Flask
 
 # --------------------
-# ENV & LOGGING
+# ENV & LOGGING why
+
 # --------------------
 load_dotenv()
 token = os.getenv("DISCORD_TOKEN")
