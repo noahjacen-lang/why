@@ -149,26 +149,36 @@ async def JudgeABitch(ctx, defendant: discord.Member):
     await vote_msg.add_reaction("✅")
     await vote_msg.add_reaction("❌")
 
+
+    # Start poll
+    vote_msg = await ctx.send(
+        f"🗳️ **Vote: Should {defendant.mention} be muted for 1 minute?**\n"
+        "✅ = Yes\n❌ = No"
+    )
+    await vote_msg.add_reaction("✅")
+    await vote_msg.add_reaction("❌")
+
     # Wait 30 seconds for votes
     await asyncio.sleep(30)
 
-    # Refresh message to get updated reactions
+    # Fetch updated reactions
     vote_msg = await ctx.channel.fetch_message(vote_msg.id)
-    reactions = {str(r.emoji): r.count - 1 for r in vote_msg.reactions}  # subtract bot reaction
+    reactions = {str(r.emoji): r.count - 1 for r in vote_msg.reactions}  # subtract bot's reaction
     yes_votes = reactions.get("✅", 0)
     no_votes = reactions.get("❌", 0)
     total_votes = yes_votes + no_votes
 
+    # Decide outcome
     if total_votes == 0:
         await ctx.send("No votes were cast. Trial ends with no action.")
     else:
         yes_percent = (yes_votes / total_votes) * 100
-        if yes_percent >= 50:  # more than half yes votes
+        if yes_percent >= 50:
             try:
                 await defendant.timeout(duration=datetime.timedelta(minutes=1))
                 await ctx.send(f"{defendant.mention} has been muted for 1 minute by the court!")
             except discord.Forbidden:
-                await ctx.send("I can't timeout the defendant due to permissions.")
+                await ctx.send("I don't have permission to timeout the defendant.")
             except discord.HTTPException as e:
                 await ctx.send(f"Failed to timeout defendant: {e}")
         else:
