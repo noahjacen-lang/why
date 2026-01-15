@@ -159,7 +159,7 @@ async def JudgeABitch(ctx, defendant: discord.Member):
     await vote_msg.add_reaction("❌")
 
     # Wait 30 seconds for votes
-    await asyncio.sleep(30)
+    await asyncio.sleep(15)
 
     # Fetch updated reactions
     vote_msg = await ctx.channel.fetch_message(vote_msg.id)
@@ -175,7 +175,7 @@ async def JudgeABitch(ctx, defendant: discord.Member):
         yes_percent = (yes_votes / total_votes) * 100
         if yes_percent >= 50:
             try:
-                await defendant.timeout(duration=datetime.timedelta(minutes=1))
+                await defendant.timeout(duration=datetime.timedelta(minutes=5))
                 await ctx.send(f"{defendant.mention} has been muted for 1 minute by the court!")
             except discord.Forbidden:
                 await ctx.send("I don't have permission to timeout the defendant.")
