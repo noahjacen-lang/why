@@ -95,6 +95,92 @@ async def MuteABitch(ctx: commands.Context, member: discord.Member, duration_min
     else:
         await ctx.send("The Bitch Lives!")
 
+@bot.command()
+@commands.has_permissions(moderate_members=True)
+async def JudgeABitch(ctx, defendant: discord.Member):
+    """
+    Starts a trial where everyone in the defendant's voice channel is moved to Court-Room,
+    and the defendant has 60 seconds to plead.
+    """
+    # Check if defendant is in a voice channel
+    if defendant.voice is None:
+        await ctx.send(f"{defendant.mention} is not in a voice channel!")
+        return
+
+    original_channel = defendant.voice.channel
+
+    # Check if Court-Room exists, otherwise create it
+    court_channel = discord.utils.get(ctx.guild.voice_channels, name="Court-Room")
+    if court_channel is None:
+        overwrites = {
+            ctx.guild.default_role: discord.PermissionOverwrite(connect=True)
+        }
+        court_channel = await ctx.guild.create_voice_channel("Court-Room", overwrites=overwrites)
+
+    # Get all members in the defendant's channel
+    members_to_move = original_channel.members
+    if not members_to_move:
+        await ctx.send("No one is in the defendant's channel to move!")
+        return
+
+    # Move everyone to Court-Room
+    for member in members_to_move:
+        try:
+            await member.move_to(court_channel)
+        except discord.Forbidden:
+            await ctx.send(f"Can't move {member.mention} due to permissions.")
+        except discord.HTTPException:
+            await ctx.send(f"Failed to move {member.mention}.")
+
+    # Announce the trial
+    trial_msg = await ctx.send(
+        f"⚖️ **Trial of {defendant.mention} has begun!**\n"
+        f"{defendant.mention}, you have 60 seconds to plead your case!"
+    )
+
+    # Wait 60 seconds for defendant to plead
+    await asyncio.sleep(60)
+
+    # Create vote message
+    vote_msg = await ctx.send(
+        f"🗳️ **Vote: Should {defendant.mention} be muted for 1 minute?**\n"
+        "✅ = Yes\n❌ = No"
+    )
+    await vote_msg.add_reaction("✅")
+    await vote_msg.add_reaction("❌")
+
+    # Wait 30 seconds for votes
+    await asyncio.sleep(30)
+
+    # Refresh message to get updated reactions
+    vote_msg = await ctx.channel.fetch_message(vote_msg.id)
+    reactions = {str(r.emoji): r.count - 1 for r in vote_msg.reactions}  # subtract bot reaction
+    yes_votes = reactions.get("✅", 0)
+    no_votes = reactions.get("❌", 0)
+    total_votes = yes_votes + no_votes
+
+    if total_votes == 0:
+        await ctx.send("No votes were cast. Trial ends with no action.")
+    else:
+        yes_percent = (yes_votes / total_votes) * 100
+        if yes_percent >= 50:  # more than half yes votes
+            try:
+                await defendant.timeout(duration=datetime.timedelta(minutes=1))
+                await ctx.send(f"{defendant.mention} has been muted for 1 minute by the court!")
+            except discord.Forbidden:
+                await ctx.send("I can't timeout the defendant due to permissions.")
+            except discord.HTTPException as e:
+                await ctx.send(f"Failed to timeout defendant: {e}")
+        else:
+            await ctx.send(f"{defendant.mention} was acquitted by the court! ✅")
+
+    # Move everyone back to original channel
+    for member in members_to_move:
+        try:
+            await member.move_to(original_channel)
+        except:
+            pass
+
 @stfu.error
 async def stfu_error(ctx: commands.Context, error):
     if isinstance(error, commands.CommandOnCooldown):
