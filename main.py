@@ -89,7 +89,7 @@ async def MuteABitch(ctx: commands.Context, member: discord.Member, duration_min
             await member.timeout(duration)
             await ctx.send(f"{member.mention} is a bitch so they got muted.")
         except discord.Forbidden:
-            await ctx.send("I'm a bitch and can't mute this member.")
+            await ctx.send("I'm a bitch and can't mute this member!")
         except discord.HTTPException as e:
             await ctx.send(f"Couldn't contain its oil: {e}")
     else:
