@@ -79,7 +79,7 @@ async def MuteABitch(ctx: commands.Context, member: discord.Member, duration_min
     total_votes = yes_votes + no_votes
 
     if total_votes == 0:
-        await ctx.send("You all are a bunch of bitches.")
+        await ctx.send("You all are a bunch of bitches!")
         return
 
     yes_percent = (yes_votes / total_votes) * 100
