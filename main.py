@@ -52,7 +52,7 @@ async def stfu(ctx: commands.Context, member: discord.Member):
     except discord.Forbidden:
         await ctx.send("I'm a bitch and can't mute this member.")
     except discord.HTTPException as e:
-        await ctx.send(f"Couldn't contain its oil: {e}")
+        await ctx.send(f"Couldn't contain it's oil: {e}")
 
 @bot.command()
 @commands.has_permissions(moderate_members=True)
